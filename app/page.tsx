@@ -9,7 +9,7 @@ import { analyzeContract, fixIssues as aiFixIssues } from "@/utils/ai-prompt";
 export default function Home() {
   const [loading, setLoading] = useState(false);
   const [contract, setContract] = useState("");
-  const [results, setResults] = useState(null);
+  const [results, setResults] = useState<any[] | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const analyze = async () => {
@@ -20,7 +20,7 @@ export default function Home() {
   const fixIssues = async () => {
     if (results) {
       const suggestions = results.find(
-        (r) => r.section === "Suggestions for Improvement"
+        (r:any) => r.section === "Suggestions for Improvement"
       )?.details;
       if (suggestions) {
         await aiFixIssues(contract, suggestions, setContract, setLoading);
