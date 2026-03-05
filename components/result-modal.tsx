@@ -1,212 +1,218 @@
-import React, { useState } from "react";
-import { Dialog } from "@headlessui/react";
+"use client";
+
+import React, { Fragment, useState } from "react";
+import { Dialog, Transition } from "@headlessui/react";
 import {
-  IconChecklist,
-  IconCircleCheck,
-  IconGauge,
-  IconChevronDown,
-  IconChevronUp,
+  IconX,
+  IconShieldCheck,
+  IconChartBar,
+  IconBulb,
   IconTool,
+  IconLoader2,
+  IconChevronDown,
 } from "@tabler/icons-react";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
+import type { AuditSection, AuditMetric } from "@/utils/ai-prompt";
 
 interface ResultsModalProps {
   isOpen: boolean;
-  closeModal: () => void;
+  onClose: () => void;
   loading: boolean;
-  results: any;
-  fixIssues: () => void;
+  results: AuditSection[] | null;
+  onFix: () => void;
+  fixing: boolean;
 }
 
-const ResultsModal: React.FC<ResultsModalProps> = ({
-  isOpen,
-  closeModal,
-  loading,
-  results,
-  fixIssues,
-}) => {
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
-
-  const toggleSection = (section: string) => {
-    setExpandedSection((prevSection) =>
-      prevSection === section ? null : section
-    );
-  };
-
-  return (
-    <Dialog
-      open={isOpen}
-      onClose={closeModal}
-      className="fixed z-10 inset-0 overflow-y-auto"
-    >
-      <div className="flex items-center justify-center min-h-screen px-4 text-center">
-        <div
-          className="fixed inset-0 bg-black opacity-50"
-          aria-hidden="true"
-        ></div>
-        {loading ? (
-          <div className="bg-white dark:bg-neutral-900 rounded-2xl overflow-hidden shadow-xl transform transition-all max-w-lg w-full p-8 space-y-8">
-            <div className="flex py-14 flex-col items-center">
-              <svg
-                className="animate-spin -ml-1 mr-3 h-14 w-14 text-blue-600"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8V4a8 8 0 00-8 8z"
-                ></path>
-              </svg>
-              <p className="mt-4 text-lg text-gray-700 dark:text-gray-300">
-                Analyzing smart contract...
-              </p>
-            </div>
-          </div>
-        ) : (
-          results && (
-            <div className="bg-white dark:bg-neutral-900 rounded-2xl overflow-hidden shadow-xl transform transition-all max-w-3xl w-full p-8 space-y-8">
-              <div className="space-y-8">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                    Audit Results
-                  </h2>
-                </div>
-                <div className="text-left">
-                  <h3
-                    className="text-xl space-x-2 cursor-pointer flex items-center justify-between dark:text-gray-200 mb-4"
-                    onClick={() => toggleSection("auditReport")}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <IconChecklist size={24} />
-                      <span>Audit Report</span>
-                    </div>
-                    {expandedSection === "auditReport" ? (
-                      <IconChevronUp size={24} />
-                    ) : (
-                      <IconChevronDown size={24} />
-                    )}
-                  </h3>
-                  {expandedSection === "auditReport" && (
-                    <p className="text-base text-gray-700 dark:text-gray-300">
-                      {
-                        results.find((r: any) => r.section === "Audit Report")
-                          .details
-                      }
-                    </p>
-                  )}
-                </div>
-                <div className="text-left">
-                  <h3
-                    className="text-xl space-x-2 cursor-pointer flex items-center justify-between dark:text-gray-200 mb-4"
-                    onClick={() => toggleSection("metricScores")}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <IconGauge size={24} />
-                      <span>Metric Scores</span>
-                    </div>
-                    {expandedSection === "metricScores" ? (
-                      <IconChevronUp size={24} />
-                    ) : (
-                      <IconChevronDown size={24} />
-                    )}
-                  </h3>
-                  {expandedSection === "metricScores" && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {results
-                        .find((r: any) => r.section === "Metric Scores")
-                        .details.map((metric: any, metricIndex: number) => {
-                          let color;
-                          if (metric.score >= 8) color = "#4caf50"; // green
-                          else if (metric.score < 5) color = "#f44336"; // red
-                          else color = "#ffeb3b"; // yellow
-                          return (
-                            <div
-                              key={metricIndex}
-                              className="flex flex-col items-center"
-                            >
-                              <div className="w-24 h-24">
-                                <CircularProgressbar
-                                  value={metric.score * 10}
-                                  text={`${metric.score}/10`}
-                                  strokeWidth={10}
-                                  styles={buildStyles({
-                                    textSize: "16px",
-                                    pathColor: color,
-                                    textColor: color,
-                                    trailColor: "#d6d6d6",
-                                  })}
-                                />
-                              </div>
-                              <p className="text-center mt-2 text-gray-700 dark:text-gray-300">
-                                {metric.metric}
-                              </p>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  )}
-                </div>
-                <div className="text-left">
-                  <h3
-                    className="text-xl space-x-2 cursor-pointer flex items-center justify-between dark:text-gray-200 mb-4"
-                    onClick={() => toggleSection("suggestions")}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <IconCircleCheck size={24} />
-                      <span>Suggestions for Improvement</span>
-                    </div>
-                    {expandedSection === "suggestions" ? (
-                      <IconChevronUp size={24} />
-                    ) : (
-                      <IconChevronDown size={24} />
-                    )}
-                  </h3>
-                  {expandedSection === "suggestions" && (
-                    <>
-                      <p className="text-base text-gray-700 dark:text-gray-300">
-                        {
-                          results.find(
-                            (r: any) =>
-                              r.section === "Suggestions for Improvement"
-                          ).details
-                        }
-                      </p>
-                      <button
-                        onClick={fixIssues}
-                        className="mt-4 rounded-full inline-flex items-center px-4 py-2 border border-transparent text-base leading-6 font-medium  text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:border-blue-700 focus:shadow-outline-blue active:bg-blue-700 transition ease-in-out duration-150"
-                      >
-                        <IconTool size={20} className="mr-2" />
-                        Fix
-                      </button>
-                    </>
-                  )}
-                </div>
-                <div className="flex justify-end">
-                  <button
-                    onClick={closeModal}
-                    className="text-blue-500 hover:text-blue-700"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          )
-        )}
-      </div>
-    </Dialog>
-  );
+const scoreColor = (score: number) => {
+  if (score >= 8) return "#22c55e";
+  if (score >= 5) return "#eab308";
+  return "#ef4444";
 };
 
-export default ResultsModal;
+const SECTION_ICONS: Record<string, React.ReactNode> = {
+  "Audit Report": <IconShieldCheck size={20} />,
+  "Metric Scores": <IconChartBar size={20} />,
+  "Suggestions for Improvement": <IconBulb size={20} />,
+};
+
+function MetricGrid({ metrics }: { metrics: AuditMetric[] }) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-2">
+      {metrics.map((m) => (
+        <div
+          key={m.metric}
+          className="flex flex-col items-center gap-2 p-4 bg-zinc-800/50 rounded-xl border border-zinc-700/30"
+        >
+          <div className="w-16 h-16">
+            <CircularProgressbar
+              value={m.score * 10}
+              text={`${m.score}`}
+              strokeWidth={8}
+              styles={buildStyles({
+                textSize: "28px",
+                pathColor: scoreColor(m.score),
+                textColor: scoreColor(m.score),
+                trailColor: "#27272a",
+                pathTransitionDuration: 0.8,
+              })}
+            />
+          </div>
+          <span className="text-xs text-zinc-400 text-center font-medium">
+            {m.metric}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SectionBlock({
+  section,
+  onFix,
+  fixing,
+}: {
+  section: AuditSection;
+  onFix?: () => void;
+  fixing?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const isMetrics = section.section === "Metric Scores";
+  const isSuggestions = section.section === "Suggestions for Improvement";
+
+  return (
+    <div className="border border-zinc-800 rounded-xl overflow-hidden">
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full flex items-center justify-between px-5 py-4 bg-zinc-800/30 hover:bg-zinc-800/50 transition-colors"
+      >
+        <div className="flex items-center gap-3 text-white">
+          <span className="text-indigo-400">
+            {SECTION_ICONS[section.section]}
+          </span>
+          <span className="font-medium text-sm">{section.section}</span>
+        </div>
+        <IconChevronDown
+          size={16}
+          className={`text-zinc-500 transition-transform duration-200 ${
+            expanded ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {expanded && (
+        <div className="px-5 py-4">
+          {isMetrics && Array.isArray(section.details) ? (
+            <MetricGrid metrics={section.details as AuditMetric[]} />
+          ) : (
+            <>
+              <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                {section.details as string}
+              </p>
+              {isSuggestions && onFix && (
+                <button
+                  onClick={onFix}
+                  disabled={fixing}
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 rounded-lg transition-all"
+                >
+                  {fixing ? (
+                    <>
+                      <IconLoader2 size={16} className="animate-spin" />
+                      Fixing...
+                    </>
+                  ) : (
+                    <>
+                      <IconTool size={16} />
+                      Auto-fix Issues
+                    </>
+                  )}
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ResultsModal({
+  isOpen,
+  onClose,
+  loading,
+  results,
+  onFix,
+  fixing,
+}: ResultsModalProps) {
+  return (
+    <Transition appear show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
+        </Transition.Child>
+
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Dialog.Panel className="w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
+                  <Dialog.Title className="text-lg font-semibold text-white">
+                    {loading ? "Analyzing Contract..." : "Audit Results"}
+                  </Dialog.Title>
+                  <button
+                    onClick={onClose}
+                    className="text-zinc-500 hover:text-white transition-colors p-1 rounded-lg hover:bg-zinc-800"
+                  >
+                    <IconX size={20} />
+                  </button>
+                </div>
+
+                <div className="p-6">
+                  {loading ? (
+                    <div className="flex flex-col items-center justify-center py-16 gap-4">
+                      <div className="w-12 h-12 border-[3px] border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+                      <p className="text-sm text-zinc-400">
+                        AI is analyzing your smart contract...
+                      </p>
+                    </div>
+                  ) : results ? (
+                    <div className="space-y-4">
+                      {results.map((section) => (
+                        <SectionBlock
+                          key={section.section}
+                          section={section}
+                          onFix={
+                            section.section === "Suggestions for Improvement"
+                              ? onFix
+                              : undefined
+                          }
+                          fixing={fixing}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition>
+  );
+}
