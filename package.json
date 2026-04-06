@@ -2,7 +2,7 @@
   "name": "audit-ai",
   "version": "0.1.0",
   "private": true,
-  "license":"MIT",
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -14,7 +14,7 @@
     "@tabler/icons-react": "^3.12.0",
     "clsx": "^2.1.1",
     "framer-motion": "^11.3.28",
-    "next": "14.2.5",
+    "next": "14.2.35",
     "openai": "^4.55.9",
     "prismjs": "^1.29.0",
     "react": "^18",
